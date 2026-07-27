@@ -1,62 +1,84 @@
 from MovieClass import Movie
+import json
 
-#creating a list of hollywood movies
-list_of_hollywood_movies = [
-    Movie("Inception", "Christopher Nolan", 2010, ["Action", "Sci-Fi"]),
-    Movie("The Shawshank Redemption", "Frank Darabont", 1994, ["Drama"]),
-    Movie("The Godfather", "Francis Ford Coppola", 1972, ["Crime", "Drama"]),
-    Movie("The Dark Knight", "Christopher Nolan", 2008, ["Action", "Crime", "Drama"]),
-    Movie("Pulp Fiction", "Quentin Tarantino", 1994, ["Crime", "Drama"]),
-    Movie("The Lord of the Rings: The Return of the King", "Peter Jackson", 2003, ["Adventure", "Drama", "Fantasy"]),
-    Movie("Forrest Gump", "Robert Zemeckis", 1994, ["Drama", "Romance"]),
-    Movie("The Matrix", "Lana Wachowski, Lilly Wachowski", 1999, ["Action", "Sci-Fi"]),
-    Movie("Fight Club", "David Fincher", 1999, ["Drama"]),
-    Movie("The Silence of the Lambs", "Jonathan Demme", 1991, ["Crime", "Drama", "Thriller"]),
-]
+JSON_FILE = "moviesList.json"
 
-#creating a list of bollywood movies
-list_of_bollywood_movies = [
-    Movie("3 Idiots", "Rajkumar Hirani", 2009, ["Comedy", "Drama"]),
-    Movie("Dangal", "Nitesh Tiwari", 2016, ["Biography", "Drama", "Sport"]),
-    Movie("Bajrangi Bhaijaan", "Kabir Khan", 2015, ["Adventure", "Comedy", "Drama"]),
-    Movie("PK", "Rajkumar Hirani", 2014, ["Comedy", "Drama", "Sci-Fi"]),
-    Movie("Baahubali: The Beginning", "S. S. Rajamouli", 2015, ["Action", "Drama", "Fantasy"]),
-    Movie("Bajrangi Bhaijaan", "Kabir Khan", 2015, ["Adventure", "Comedy", "Drama"]),
-    Movie("Kabir Singh", "Sandeep Reddy Vanga", 2019, ["Drama", "Romance"]),
-    Movie("Andhadhun", "Sriram Raghavan", 2018, ["Crime", "Drama", "Thriller"]),
-    Movie("Tanhaji: The Unsung Warrior", "Om Raut", 2020, ["Action", "Biography", "Drama"]),
-    Movie("Chhichhore", "Nitesh Tiwari", 2019, ["Comedy", "Drama"]),
-]
-
+#function to load movies from JSON
+def load_movies_from_json():
+    database = {"Hollywood": [], "Bollywood": []}
+    
+    #load JSON file
+    with open(JSON_FILE, "r") as file:
+        raw_data = json.load(file)
+    
+        #append Hollywood and Bollywood movies individually into database
+        for industry in database.keys():
+            if industry in raw_data:
+                for movie_dict in raw_data[industry]:
+                    database[industry].append(movie_dict)
+                    
+    return database
+        
+        
 #function to print the suggestions based on the genre
-def print_suggestions(suggestions):
+def print_suggestions(suggestions, genre, industry_name):
+    print(f"\n--- {industry_name} Movies---")
     if not suggestions:
         print(f"No movies found for the genre '{genre}'.")
     else:
         for movie in suggestions:
-            print(f"{movie.title} ({movie.year}) directed by {movie.director}. Genres: {', '.join(movie.genres)}")
+            print(f"{movie["title"]} ({movie["year"]}) directed by {movie["director"]} | Genre: " + (", ".join(movie["genre"])))
+
+#function to search for movies based on user genre
+def search_for_movies(movies_db):
+    try:
+        user_genre = input("\nEnter a genre to search (or press Enter to cancel): ")
+        
+        if not user_genre:
+            print("\n-----Action cancelled-----")
+            return
+        
+        #.title() changes "sci-fi" to "Sci-Fi" autoamtically
+        formatted_genre = user_genre.title()
+        
+        #search with Hollywood and Bollywood movies separately and append to print suggestions
+        for industry, movies_list in movies_db.items():
+            suggestions = [] 
+            for movie in movies_list:
+                if formatted_genre in movie['genre']:
+                    suggestions.append(movie)
+            print_suggestions(suggestions, formatted_genre, industry)
+            
+    except KeyboardInterrupt:
+        print("\nSearch interrupted by user")
+    except Exception as e:
+        print(f"An error occured during search: {e}")
+                    
 
 #function to get movie suggestions based on the genre
-def get_suggestions():
-    genre = input("Enter a genre to get movie suggestions: ")
-    suggestions = []
+def main_menu():
+   
+    movies_db = load_movies_from_json()
     
-    print("Hollywood Movies:")
-    
-    #appending the movies of the given genre from hollywood movies
-    for movie in list_of_hollywood_movies:
-        if genre in movie.genres:
-            suggestions.append(movie)
-    print_suggestions(suggestions)
-            
-    print("\nBollywood Movies:")
-    
-    #appending the movies of the given genre from bollywood movies
-    for movie in list_of_bollywood_movies:
-        if genre in movie.genres:
-            suggestions.append(movie)
-    print_suggestions(suggestions)
+    while True:
+        print("\n==================================\n")
+        print("     MOVIE RECOMMENDATIONS    ")
+        print("\n==================================")
+        print("1. Search movies by genre")
+        print("2. Exit Application")
+
+        #strip removes spaces from the input (before & after)
+        choice = input("\nSelect an option (1-2): ").strip()
+        
+        if choice == "1":
+            search_for_movies(movies_db)
+        elif choice == "2":
+            print("\nThankyou for using the Movie app. Bye!\n")
+            break
+        else:
+            print("INVALID CHOICE. Please enter a valid number (1 or 2)")
     
 
 #running the function to get movie suggestions based on the genre
-get_suggestions()
+if __name__ == "__main__":
+    main_menu()
